@@ -122,11 +122,9 @@ def play():
             ),
         )
         threads.append(thread)
-    # Start them all
+
     for thread in threads:
         thread.start()
-
-    # Wait for all to complete
     for thread in threads:
         thread.join()
     response = requests.get(url=f"{url}/score/")

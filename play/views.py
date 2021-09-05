@@ -31,7 +31,7 @@ class UserView(APIView):
                 f"{name}@organization.org",
                 user_data.get("password"),
             )
-            message = {"message": f"{name} succesfully created"}
+            message = {"message": f"{name} successfully created"}
         return Response(message)
 
 
@@ -78,7 +78,7 @@ class MoveView(APIView):
                     break
             if won:
                 return True, True
-        return (not "_" in board), False
+        return ("_" not in board), False
 
     @permission_classes([IsAuthenticated])
     def put(self, request, game_id, row, column):
@@ -136,7 +136,7 @@ class MoveView(APIView):
 class ScoreView(APIView):
     """The view that shows the scores"""
 
-    def get(self, reuest):
+    def get(self, _):
         winners = defaultdict(int)
         participants = defaultdict(int)
         for game in Game.objects.all():
