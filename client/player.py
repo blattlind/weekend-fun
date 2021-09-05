@@ -1,6 +1,9 @@
 import json
+import threading
 
 import requests
+
+output = threading.Lock()
 
 
 def create_user(name, url):
@@ -17,16 +20,25 @@ def get_token(name, url):
         raise ValueError(response.text)
     return extract_field(response, "token")
 
-def play_game(moves, tok_x, url, user_x, user_o,):
-    game_id = start_game(tok_x, url, user_x, user_o,)
+
+def play_game(moves, tok_x, url, user_x, user_o, thread_name=""):
+    game_id = start_game(
+        tok_x,
+        url,
+        user_x,
+        user_o,
+    )
     for move in moves:
-        if make_move(url, move[0], game_id, move[1], move[2]):
+        if make_move(url, move[0], game_id, move[1], move[2], thread_name):
             break
-    resonse = requests.get(url=f"{url}/score/")
-    print(resonse.json())
 
 
-def start_game(token, url, user_x, user_o,):
+def start_game(
+    token,
+    url,
+    user_x,
+    user_o,
+):
     response = requests.post(
         f"{url}/game/{user_o}/{user_x}/", headers={f"Authorization": f"Token {token}"}
     )
@@ -34,24 +46,25 @@ def start_game(token, url, user_x, user_o,):
     return game_id
 
 
-def make_move(url, token, game_id, row, column) -> bool:
+def make_move(url, token, game_id, row, column, thread_name="") -> bool:
     response = requests.put(
         f"{url}/move/{game_id}/{row}/{column}/",
         headers={f"Authorization": f"Token {token}"},
     )
     if response.status_code != 200:
         raise ValueError(response.text)
-    board = extract_field(response, "board")
-    print(f"{board[:3]}\n{board[3:6]}\n{board[6:]}")
-    return extract_field(response, "over", False)
+    # board = extract_field(response, "board", False, thread_name)
+    # with output:
+    #     print(f"{thread_name}\n{board[:3]}\n{board[3:6]}\n{board[6:]}")
+    return extract_field(response, "over", True, thread_name)
 
 
-def extract_field(response, field_name, verbose = True):
+def extract_field(response, field_name, verbose=True, thread_name=""):
     response_json = response.json()
     if verbose:
-        print(response_json)
+        with output:
+            print(f"{thread_name}{response_json}")
     return response_json[field_name]
-
 
 
 def play():
@@ -72,8 +85,7 @@ def play():
         (tok_x, 3, 2),
         (tok_o, 3, 1),
     ]
-    play_game(moves_1, tok_x, url, user_x, user_o,)
-    moves = [
+    moves_2 = [
         (tok_o, 1, 1),
         (tok_x, 1, 2),
         (tok_o, 1, 3),
@@ -82,8 +94,7 @@ def play():
         (tok_x, 2, 3),
         (tok_o, 3, 1),
     ]
-    play_game(moves, tok_o, url, user_o, user_x,)
-    moves = [
+    moves_3 = [
         (tok_x, 1, 1),
         (tok_o, 1, 2),
         (tok_x, 1, 3),
@@ -94,7 +105,32 @@ def play():
         (tok_o, 3, 1),
         (tok_x, 3, 3),
     ]
-    play_game(moves, tok_o, url, user_x, user_o,)
+
+    threads = []
+    i = 0
+    for moves in [moves_1, moves_2, moves_3]:
+        i += 1
+        thread = threading.Thread(
+            target=play_game,
+            args=(
+                moves,
+                tok_o,
+                url,
+                user_x,
+                user_o,
+                f"T{i} ",
+            ),
+        )
+        threads.append(thread)
+    # Start them all
+    for thread in threads:
+        thread.start()
+
+    # Wait for all to complete
+    for thread in threads:
+        thread.join()
+    response = requests.get(url=f"{url}/score/")
+    print(response.json())
 
 
 if __name__ == "__main__":

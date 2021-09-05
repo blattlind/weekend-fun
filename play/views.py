@@ -1,7 +1,7 @@
 """the views for tictactoe.play"""
 import json
 from collections import defaultdict
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -70,7 +70,6 @@ class MoveView(APIView):
 
     @classmethod
     def won_or_over(cls, board: str, tag: str) -> Tuple[bool, bool]:
-        print(type(board))
         for tri in cls.WINNING_TRIPLES:
             won = True
             for cur in tri:
@@ -133,6 +132,7 @@ class MoveView(APIView):
         }
         return Response(content)
 
+
 class ScoreView(APIView):
     """The view that shows the scores"""
 
@@ -145,7 +145,11 @@ class ScoreView(APIView):
                     winners[game.winner.username] += 1
                 participants[game.player_x.username] += 1
                 participants[game.player_o.username] += 1
-        result: Dict[str,Tuple[int,int,float]] = {}
+        result: Dict[str, Tuple[int, int, float]] = {}
         for user in participants.keys():
-            result[user] = (participants[user], winners[user], round(winners[user] / participants[user], 2))
+            result[user] = (
+                participants[user],
+                winners[user],
+                round(winners[user] / participants[user], 2),
+            )
         return Response(result)

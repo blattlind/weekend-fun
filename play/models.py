@@ -4,7 +4,8 @@ from django.db import models
 
 
 class Game(models.Model):
-    """  a tictactoe game for django users"""
+    """a tictactoe game for django users"""
+
     player_x = models.ForeignKey(User, on_delete=models.CASCADE, related_name="x")
     player_o = models.ForeignKey(User, on_delete=models.CASCADE, related_name="o")
     last_player = models.ForeignKey(

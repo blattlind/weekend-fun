@@ -1,1 +1,4 @@
 /play/migrations/*
+/titato/
+/db.sqlite3
+/.idea/
